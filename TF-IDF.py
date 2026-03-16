@@ -4,11 +4,11 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 raw_corpus = {
-    "China": "China, officially the People's Republic of China, is an ancient civilization with over five thousand years of history and the world’s most populous country. Located in East Asia, it has diverse landscapes including plateaus, mountains, rivers and coastlines. China boasts rich cultural heritage such as the Great Wall, Forbidden City and traditional festivals. As a major global economy, it leads in manufacturing, trade, infrastructure and technological innovation. It follows socialism with Chinese characteristics and plays an increasingly important role in international affairs, global governance and regional cooperation. China values peace, development and win-win cooperation, striving to promote common prosperity and sustainable progress for all countries.",
+    "Artificial_Intelligence": "Artificial Intelligence (AI) is a multidisciplinary field of computer science focused on creating systems capable of performing tasks that typically require human intelligence. Core subfields include machine learning, deep learning, natural language processing, computer vision, and reinforcement learning. Modern AI is driven by large language models, neural networks with billions of parameters, which power generative AI tools for content creation, code generation, and conversational interfaces. AI is widely applied across industries: healthcare for medical image analysis, finance for fraud detection, automotive for autonomous driving, and education for personalized learning. It continues to advance rapidly, pushing the boundaries of what intelligent systems can achieve, while also sparking discussions about ethics, bias mitigation, and responsible AI deployment.",
     
-    "Russia": "Russia, or the Russian Federation, is the largest country in the world by area, spanning Eastern Europe and northern Asia. It has a long history, profound literature, art and music traditions, and stunning natural scenery like forests, lakes and tundra. As a permanent member of the UN Security Council, Russia possesses strong national strength, advanced science and technology, and influential global status. It focuses on safeguarding national sovereignty, promoting economic development and deepening international partnerships. Russia values friendship and mutually beneficial cooperation with other nations, contributing to world peace, stability and balanced development.",
+    "Computer_Networks": "Computer Networks is a foundational field of information technology that focuses on the interconnection of computing devices to enable data exchange and resource sharing across geographic distances. It relies on standardized communication protocols, most notably the TCP/IP suite, which governs how data is packetized, routed, and delivered between endpoints. Key concepts include network topology, routing algorithms, bandwidth management, network security, and cloud networking. Modern networks support critical infrastructure: from local area networks (LANs) in offices and homes, to wide area networks (WANs) connecting global data centers, to 5G and satellite networks enabling mobile and remote connectivity. Network professionals focus on optimizing performance, ensuring reliability, and defending against cyber threats like hacking, malware, and DDoS attacks.",
     
-    "Pakistan": "Pakistan, officially the Islamic Republic of Pakistan, is a country in South Asia with a long history and unique Islamic culture. It has beautiful landscapes including mountains, plains and coastal areas, and is known for its warm and hospitable people. Pakistan enjoys close and all-weather friendly relations with China, deeply rooted in mutual trust and support. As a developing country, it is committed to economic growth, improving people’s livelihood and strengthening regional connectivity. Pakistan actively participates in international cooperation and advocates peace, justice and mutual respect in global affairs. It cherishes friendship with all nations and works to build a more peaceful and prosperous future."
+    "Industrial_Robotics": "Industrial Robotics is a specialized engineering field focused on the design, development, and deployment of automated robotic systems for manufacturing and industrial production. Core components of industrial robots include robotic arms, servo motors, precision sensors, controllers, and end-of-arm tooling tailored for specific tasks. These systems are engineered to perform repetitive, high-precision, or hazardous operations with consistent accuracy, such as welding, assembly, material handling, painting, and quality inspection. A cornerstone of Industry 4.0, industrial robots integrate with IoT sensors, machine learning, and digital twin technology to create smart, flexible production lines. They are widely used in automotive manufacturing, electronics assembly, food processing, and logistics, helping businesses improve efficiency, reduce labor costs, and enhance workplace safety."
 }
 
 documents = list(raw_corpus.values())
@@ -19,46 +19,45 @@ tfidf_matrix = vectorizer.fit_transform(documents)
 feature_names = vectorizer.get_feature_names_out()
 
 df_tfidf = pd.DataFrame(tfidf_matrix.T.toarray(), index=feature_names, columns=columns_names)
-
-df_sorted_by_china = df_tfidf.sort_values(by="China", ascending=False)
-df_sorted_by_Russia = df_tfidf.sort_values(by="Russia", ascending=False)
-df_sorted_by_Pakistan = df_tfidf.sort_values(by="Pakistan", ascending=False)
+df_sorted_by_ai = df_tfidf.sort_values(by="Artificial_Intelligence", ascending=False)
+df_sorted_by_networks = df_tfidf.sort_values(by="Computer_Networks", ascending=False)
+df_sorted_by_robotics = df_tfidf.sort_values(by="Industrial_Robotics", ascending=False)
 pd.set_option('display.max_rows', None)
 
-new_text = "This colossal nation spans two different continents, making it a bridge between distinct cultural spheres. Because of its sheer size, traveling from its western borders to its eastern shores means passing through multiple time zones. The natural environment is notoriously harsh, featuring vast, freezing plains and endless stretches of dense, needle-leaf forests. Historically, it has transitioned through powerful imperial eras and a major twentieth-century ideological union, leaving a complex legacy. Today, its global influence is heavily sustained by the extraction and exportation of immense underground energy reserves, particularly fossil fuels, which lie hidden beneath its freezing terrain."
+
+new_text = "This cutting-edge technology uses layered neural networks to process and generate human-like text, images, and code. It powers chatbots that can hold natural conversations, tools that help developers write and debug software, and systems that create original art and marketing content. At its core are large models trained on massive datasets, using machine learning techniques to recognize patterns and make predictions. It is transforming industries from content creation to customer service, with ongoing research focused on improving accuracy, reducing harmful outputs, and making systems more accessible to businesses of all sizes."
 new_vector = vectorizer.transform([new_text])
 
 similarity_scores = cosine_similarity(new_vector, tfidf_matrix)[0]
 results = dict(zip(columns_names, similarity_scores))
 
 print("similarity score:")
-for country, score in results.items():
-    print(f" {country}: {score:.4f}")
+for domain, score in results.items():
+    print(f" {domain}: {score:.4f}")
 
 best_match = max(results, key=results.get)
-print(f"\n The country closest to this new text is: {best_match}")
+print(f"\n The domain closest to this new text is: {best_match}")
 
 new_text_nonzero_indices = new_vector.nonzero()[1]
+best_match_index = columns_names.index(best_match)
+best_match_vector = tfidf_matrix[best_match_index]
+best_match_nonzero_indices = best_match_vector.nonzero()[1]
 
-russia_index = columns_names.index("Russia")
-russia_vector = tfidf_matrix[russia_index]
-russia_nonzero_indices = russia_vector.nonzero()[1]
-
-shared_indices = np.intersect1d(new_text_nonzero_indices, russia_nonzero_indices)
+shared_indices = np.intersect1d(new_text_nonzero_indices, best_match_nonzero_indices)
 
 evidence_data = []
 for idx in shared_indices:
     word = feature_names[idx]
     weight_in_new = new_vector[0, idx]
-    weight_in_russia = russia_vector[0, idx]
+    weight_in_original = best_match_vector[0, idx]
     evidence_data.append({
         "Matched resonance words": word,
         "Weight in new text": round(weight_in_new, 4),
-        "Weight in the original Russian text": round(weight_in_russia, 4)
+        f"Weight in the original {best_match} text": round(weight_in_original, 4)
     })
 
-df_evidence = pd.DataFrame(evidence_data).sort_values(by="Weight in the original Russian text", ascending=False)
+df_evidence = pd.DataFrame(evidence_data).sort_values(by=f"Weight in the original {best_match} text", ascending=False)
 print(df_evidence.to_string(index=False))
 
 best_match = max(results, key=results.get)
-print(f"\n The country closest to this new text is: {best_match}")
+print(f"\n The domain closest to this new text is: {best_match}")
